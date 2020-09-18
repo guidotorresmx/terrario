@@ -22,7 +22,7 @@ DHT dht2(DHTPIN2, DHTTYPE2);
 float Temperature1, Humidity1, Temperature2, Humidity2;
 
 void setup() {
-  
+
   Wire.begin(D2, D1); // Start the I2C D1 SCL and D2 SDA
   lcd.begin();        // Init LCD
   RTC.begin();        // Init RTC
@@ -41,49 +41,19 @@ void setup() {
   digitalWrite(HEAT, LOW);
   dht1.begin();       // Init dht1
   dht2.begin();       // Init dht2
-          
+
 }
 
 //int timeSinceLastRead = 0;
 
-void loop() 
-{
-  DateTime now = RTC.now();
-
-  if (now.hour() >= 9 && now.hour() < 19)  //if hour = 9 am set UVBlamp = true
-  {
-    digitalWrite(UVB, HIGH);
-  }
-  
-  else
-  {
-    digitalWrite(UVB, LOW);
-  }
-
-    if (Temperature1 >= 30.0 || Temperature2 >= 30.0)  
-  {
-    digitalWrite(HEAT, LOW);
-  }
-  
-    if (Temperature1 <= 29.0 || Temperature2 >= 29.0)  
-  {
-    digitalWrite(HEAT, HIGH);
-  }
-
-//    // Report every 2 seconds.
-//  if(timeSinceLastRead > 2000) 
-//  {
+void lcdPrinter(Temperature1, Temperature2, Humidity1, Humidity2){
+  //    // Report every 2 seconds.
+  //  if(timeSinceLastRead > 2000)
+  //  {
     digitalWrite(LED_BUILTIN, LOW);
-    
-    // Read humidity
-    Humidity1 = dht1.readHumidity();
-    Humidity2 = dht2.readHumidity();
-    
-    // Read temperature as Celsius 
-    Temperature1 = dht1.readTemperature();
-    Temperature2 = dht2.readTemperature();
-    
-//////// LCD PRINT ////////////////////////
+
+
+  //////// LCD PRINT ////////////////////////
     lcd.clear();
     lcd.setCursor(0, 0);
     lcd.print("T1:");
@@ -106,34 +76,58 @@ void loop()
     delay(3000);
     lcd.clear();
 
-  digitalWrite(LED_BUILTIN, HIGH);
+    digitalWrite(LED_BUILTIN, HIGH);
 
-  lcd.setCursor(0, 0);
-  lcd.print("Date: ");
-  lcd.setCursor(0, 1);
-  lcd.print("Time: ");
-  
-  lcd.setCursor(6, 0);
-  lcd.print(now.year(), DEC);
-  lcd.print(":");
-  lcd.print(now.month(), DEC);
-  lcd.print(":");
-  lcd.print(now.day(), DEC);
- 
-  lcd.setCursor(6, 1);
-  lcd.print(now.hour(), DEC);
-  lcd.print(":");
-  lcd.print(now.minute(), DEC);
-  lcd.print(":");
-  lcd.print(now.second(), DEC); 
-  delay(3000);
-  lcd.clear();
-//  delay(500);
-//  
-//  timeSinceLastRead = 0;
-//  }
-//  delay(100);
-//  timeSinceLastRead += 100;
+    lcd.setCursor(0, 0);
+    lcd.print("Date: ");
+    lcd.setCursor(0, 1);
+    lcd.print("Time: ");
 
-  
+    lcd.setCursor(6, 0);
+    lcd.print(now.year(), DEC);
+    lcd.print(":");
+    lcd.print(now.month(), DEC);
+    lcd.print(":");
+    lcd.print(now.day(), DEC);
+
+    lcd.setCursor(6, 1);
+    lcd.print(now.hour(), DEC);
+    lcd.print(":");
+    lcd.print(now.minute(), DEC);
+    lcd.print(":");
+    lcd.print(now.second(), DEC);
+    delay(3000);
+    lcd.clear();
+  //  delay(500);
+  //
+  //  timeSinceLastRead = 0;
+  //  }
+  //  delay(100);
+  //  timeSinceLastRead += 100;
+}
+
+void loop(){
+  DateTime now = RTC.now();
+
+  Humidity1 = dht1.readHumidity();
+  Humidity2 = dht2.readHumidity();
+
+  Temperature1 = dht1.readTemperature();
+  Temperature2 = dht2.readTemperature();
+
+
+  if (now.hour() >= 9 && now.hour() < 19)
+    digitalWrite(UVB, HIGH);
+  else
+    digitalWrite(UVB, LOW);
+
+  if (Temperature1 >= 30.0 || Temperature2 >= 30.0)
+    digitalWrite(HEAT, LOW);
+  if (Temperature1 <= 29.0 || Temperature2 <= 29.0)
+    digitalWrite(HEAT, HIGH);
+
+
+
+  lcdPrinter(Temperature1, Temperature2, Humidity1, Humidity2)
+
 }
