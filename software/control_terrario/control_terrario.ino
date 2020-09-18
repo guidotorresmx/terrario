@@ -45,6 +45,13 @@ void setup() {
 }
 
 //int timeSinceLastRead = 0;
+int size = 10;
+CircularBuffer<float,size> Humidity1; // buffer capacity is 5
+CircularBuffer<float,size> Humidity2; // buffer capacity is 5
+CircularBuffer<float,size> Temperature1; // buffer capacity is 5
+CircularBuffer<float,size> Temperature2; // buffer capacity is 5
+float currentTemp = 0.0;
+float currentHumi = 0.0;
 
 void lcdPrinter(Temperature1, Temperature2, Humidity1, Humidity2){
   //    // Report every 2 seconds.
@@ -106,28 +113,56 @@ void lcdPrinter(Temperature1, Temperature2, Humidity1, Humidity2){
   //  timeSinceLastRead += 100;
 }
 
+
+float filter(CircularBuffer<float,size> buffer) {
+  float alpha = 0.5;
+  float under = 1/alpha;
+  float accumulator = 0.0;
+
+  for(int i = 0; i<size-1; i++){
+    accumulator += pow(1-alpha, i) * buffer[i];
+  }
+  return accumulator / under;
+}
+
+
+float PredictValueFromArrays(CircularBuffer<float,size> *buffer1, CircularBuffer<float,size> *bufer2){
+  float tempValue1 = buffer1.pop();
+  float tempValue2 = buffer1.pop();
+  float predicted1 = filter(buffer1);
+  float predicted2 = filter(buffer2);
+  float predictedAverage = (predicted1 + predicted2) / 2;
+  if(abs(predicted1 - tempValue1)<.05*predicted1)
+    buffer1.push(tempValue1)
+  else
+    buffer1.push(predicted1)
+  if(abs(predicted2 - tempValue2)<.1*predicted2)
+    buffer2.push(tempValue2)
+  else
+    buffer2.push(predicted2)
+  return(predictedAverage);
+}
+
+
 void loop(){
   DateTime now = RTC.now();
+  Humidity1.push(dht1.readHumidity());
+  Humidity2.push(dht2.readHumidity());
+  Temperature1.push(dht1.readTemperature());
+  Temperature2.push(dht2.readTemperature());
 
-  Humidity1 = dht1.readHumidity();
-  Humidity2 = dht2.readHumidity();
-
-  Temperature1 = dht1.readTemperature();
-  Temperature2 = dht2.readTemperature();
-
+  currentTemp = PredictValueFromArrays(Temperature1, Temperature2)
+  currentHumi = PredictValueFromArrays(Humidity1, Humidity2)
 
   if (now.hour() >= 9 && now.hour() < 19)
     digitalWrite(UVB, HIGH);
   else
     digitalWrite(UVB, LOW);
 
-  if (Temperature1 >= 30.0 || Temperature2 >= 30.0)
+  if (currentTemp >= 30.0)
     digitalWrite(HEAT, LOW);
-  if (Temperature1 <= 29.0 || Temperature2 <= 29.0)
+  if (currentTemp <= 29.0)
     digitalWrite(HEAT, HIGH);
 
-
-
   lcdPrinter(Temperature1, Temperature2, Humidity1, Humidity2)
-
 }
